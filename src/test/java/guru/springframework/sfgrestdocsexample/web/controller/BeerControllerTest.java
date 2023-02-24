@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -23,7 +24,11 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+//import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
+import static org.springframework.restdocs.mockmvc.RestDocumentationRequestBuilders.*;
+import static org.springframework.restdocs.payload.PayloadDocumentation.*;
+import static org.springframework.restdocs.request.RequestDocumentation.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ExtendWith(RestDocumentationExtension.class)
@@ -41,12 +46,35 @@ class BeerControllerTest {
     @MockBean
     BeerRepository beerRepository;
 
+
     @Test
     void getBeerById() throws Exception {
         given(beerRepository.findById(any())).willReturn(Optional.of(Beer.builder().build()));
 
-        mockMvc.perform(get("/api/v1/beer/" + UUID.randomUUID().toString()).accept(MediaType.APPLICATION_JSON))
-                .andExpect(status().isOk());
+        //MvcResult result =
+                mockMvc.perform(get("/api/v1/beer/{beerId}", UUID.randomUUID().toString())
+                        .param("iscold", "yes") // Juste pour l'exemple
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andDo(document("v1/beer",
+                        pathParameters(
+                                parameterWithName("beerId").description("UUID de la bière demandée")
+                        ), requestParameters(
+                                parameterWithName("iscold").description("Bière froide")
+                        ), responseFields(
+                                fieldWithPath("id").description("Id de bière"),
+                                fieldWithPath("version").description("numéro de version"),
+                                fieldWithPath("createdDate").description("Date où la bière arrive en stock"),
+                                fieldWithPath("beerName").description("nom de la bière"),
+                                fieldWithPath("beerStyle").description("pression ou non"),
+                                fieldWithPath("upc").description("Code barre"),
+                                fieldWithPath("price").description("Prix"),
+                                fieldWithPath("quantityOnHand").description("reste en stock"),
+                                fieldWithPath("lastModifiedDate").description("dernière mise à jour")
+                        )
+                ));
+                //.andReturn();
+        //System.out.println(result.getResponse().getContentAsString());
     }
 
     @Test
@@ -57,7 +85,21 @@ class BeerControllerTest {
         mockMvc.perform(post("/api/v1/beer/")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(beerDtoJson))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andDo(document("v1/beer",
+                        requestFields(
+                                fieldWithPath("id").ignored(),
+                                fieldWithPath("version").ignored(),
+                                fieldWithPath("createdDate").ignored(),
+                                fieldWithPath("beerName").description("nom de la bière"),
+                                fieldWithPath("beerStyle").description("type de bière (pression etc...)"),
+                                fieldWithPath("upc").description("Code barre"),
+                                fieldWithPath("price").description("Prix"),
+                                fieldWithPath("quantityOnHand").ignored(),
+                                fieldWithPath("lastModifiedDate").ignored()
+                        )
+                        ))
+        ;
     }
 
     @Test
