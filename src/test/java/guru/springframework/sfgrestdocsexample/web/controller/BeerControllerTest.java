@@ -60,13 +60,13 @@ class BeerControllerTest {
                         .param("iscold", "yes") // Juste pour l'exemple
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andDo(document("v1/beer",
+                .andDo(document("v1/beer-get", // unique identifier for each request so documentation can distinguish
                         pathParameters(
                                 parameterWithName("beerId").description("UUID de la bière demandée")
                         ), requestParameters(
                                 parameterWithName("iscold").description("Bière froide")
                         ), responseFields(
-                                fieldWithPath("id").description("Id de bière"),
+                                fieldWithPath("id").description("Id de bière").type(UUID.class),
                                 fieldWithPath("version").description("numéro de version"),
                                 fieldWithPath("createdDate").description("Date où la bière arrive en stock"),
                                 fieldWithPath("beerName").description("nom de la bière"),
@@ -92,7 +92,7 @@ class BeerControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(beerDtoJson))
                 .andExpect(status().isCreated())
-                .andDo(document("v1/beer",
+                .andDo(document("v1/beer-new", // unique identifier for each request so documentation can distinguish
                         requestFields(
                                 fieldWithPath("id").ignored(),
                                 fieldWithPath("version").ignored(),
